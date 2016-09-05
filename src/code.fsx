@@ -109,24 +109,20 @@ type Trie() =
                     | Some child -> find xs.Tail child
                     | None -> node
 
-    let rec delete word (xs : List<String>) (node : Node) =
-        let parent = (find xs node).Parent
+    let rec delete word (node : Node) =
+        let parent = node.Parent
         match parent with
             | None -> false
             | Some parent ->
-                let data = node.RemoveData(word)
+                let data = node.RemoveData word
                 match data with
                     // words remain in list
-                    | _::_ -> true
-                    // this node is now useless, so remove from parent
-                    // somehow need to keep doing this until reach parent that has children reamining
-                    // i.e don't leave empty branches..
+                    | _ :: _ -> true
+                    // remove node from parent if node has no children
+                    // recursively delete to prune dead branch until reaching a node with data
                     | [] ->
-                        parent.RemoveChild node.Value
-                        true
-
-            // if node.Data with word removed is empty then delete node from parent
-            // else just remove the word from node.Data
+                        if node.Children.IsEmpty then parent.RemoveChild node.Value
+                        delete word parent
 
     member this.Insert word =
         let xs = word |> calculateWordCode |> stringToListOfStrings
@@ -139,16 +135,15 @@ type Trie() =
     member this.Delete word =
         let key = word |> calculateWordCode
         let node = this.Find key
-        delete word (key |> stringToListOfStrings) node
+        delete word node
+
 
 let t9 = Trie()
 
-t9.Insert("abc")
-t9.Insert("aaa")
+t9.Insert "aaaa"
+t9.Insert "az"
+t9.Insert "bbbb"
 
-t9.Delete("abc")
+Console.WriteLine(t9.Delete("aaaa"))
 
-Console.WriteLine(t9.Find("222").Data)
-
-t9.Delete("aaa")
-Console.WriteLine(t9.Find("222"))
+Console.WriteLine(t9.Find(""))
