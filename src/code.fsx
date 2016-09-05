@@ -1,14 +1,27 @@
 #r "../node_modules/fable-core/Fable.Core.dll"
+#load "../node_modules/fable-import-fetch/Fable.Import.Fetch.fs"
+#load "../node_modules/fable-import-fetch/Fable.Helpers.Fetch.fs"
 
 open Fable.Core
 open Fable
 open System
 open System.Collections
 
+open Fable.Import.Fetch
+open Fable.Helpers.Fetch
+
 Import.Node.require.Invoke("core-js") |> ignore
 
-let element = Import.Browser.document.getElementById "app"
-element.innerText <- "Hello, World!"
+let d = Import.Browser.document
+
+let createKey num =
+    let div = d.createElement "div"
+    div.innerText <- num.ToString()
+    div
+
+let keypad = d.getElementById "keypad"
+
+[2..9] |> List.map createKey |> Seq.iter (fun div -> keypad.appendChild(div) |> ignore)
 
 let xsToCodes index xs =
     List.map (fun letter -> (letter, (index + 2).ToString())) xs
@@ -17,9 +30,8 @@ let xsToCodes index xs =
 // https://fable-compiler.github.io/docs/compatibility.html
 // let d = System.Collections.Hashtable(26)
 
-
 let keypadCodes =
-    // initialize empty letter code dictionary
+    // // initialize empty letter code dictionary
     let result = Generic.Dictionary<string, string>(26)
     [
         ["a"; "b"; "c"];
@@ -49,11 +61,7 @@ let wordToCodeList (word : string) =
     |> Seq.map (fun c -> keypadCodes.Item(c.ToString()))
     |> Seq.toList
 
-let words = [
-    "damon"; "Saz"; "accessor"
-]
-
-let wordCodePairs =
+let wordCodePairs words =
     words
     |> List.map calculateWordCode
     |> List.zip words
@@ -69,11 +77,10 @@ type Node(value : string, parent : Node option) =
     member this.Data = data
     member this.AddChild(child : Node) = children <- children.Add(child.Value, child)
     member this.RemoveChild key = children <- children.Remove key
-    member this.AddData(word : string) =data <- word :: data
+    member this.AddData(word : string) = data <- word :: data
     member this.RemoveData word =
         data <- List.filter (fun w -> w <> word) data
         data
-    member this.HasData = not data.IsEmpty
 
 type Trie() =
     let rootValue = "^"
@@ -86,43 +93,43 @@ type Trie() =
 
     let rec insert (xs : List<string>) (node : Node) (word : string) =
         match xs with
-            | [] ->
-                node.AddData word |> ignore
-                node
-            | prefix::tail ->
-                let child = node.Children.TryFind prefix
-                let c =
-                    match child with
-                        | Some child -> child
-                        | None ->
-                            let newNode = Node(prefix, Some node)
-                            node.AddChild(newNode) |> ignore
-                            newNode
-                insert tail c word
+        | [] ->
+            node.AddData word |> ignore
+            node
+        | prefix :: tail ->
+            let child = node.Children.TryFind prefix
+            let c =
+                match child with
+                | Some child -> child
+                | None ->
+                    let newNode = Node(prefix, Some node)
+                    node.AddChild(newNode) |> ignore
+                    newNode
+            insert tail c word
 
     let rec find (xs : List<String>) (node : Node) =
         match xs with
-            | [] -> node
-            | prefix::tail ->
-                let child = node.Children.TryFind prefix
-                match child with
-                    | Some child -> find xs.Tail child
-                    | None -> node
+        | [] -> node
+        | prefix :: tail ->
+            let child = node.Children.TryFind prefix
+            match child with
+            | Some child -> find xs.Tail child
+            | None -> node
 
     let rec delete word (node : Node) =
         let parent = node.Parent
         match parent with
-            | None -> false
-            | Some parent ->
-                let data = node.RemoveData word
-                match data with
-                    // words remain in list
-                    | _ :: _ -> true
-                    // remove node from parent if node has no children
-                    // recursively delete to prune dead branch until reaching a node with data
-                    | [] ->
-                        if node.Children.IsEmpty then parent.RemoveChild node.Value
-                        delete word parent
+        | None -> false
+        | Some parent ->
+            let data = node.RemoveData word
+            match data with
+            // words remain in list
+            | _ :: _ -> true
+            // remove node from parent if node has no children
+            // recursively delete to prune dead branch until reaching a node with data
+            | [] ->
+                if node.Children.IsEmpty then parent.RemoveChild node.Value
+                delete word parent
 
     member this.Insert word =
         let xs = word |> calculateWordCode |> stringToListOfStrings
@@ -140,10 +147,33 @@ type Trie() =
 
 let t9 = Trie()
 
-t9.Insert "aaaa"
-t9.Insert "az"
-t9.Insert "bbbb"
+async {
+    try
+        let! fetched = fetchAsync("https://raw.githubusercontent.com/first20hours/google-10000-english/master/20k.txt", [])
+        let! txt = fetched.text() |> Async.AwaitPromise
 
-Console.WriteLine(t9.Delete("aaaa"))
+        txt.Split('\n')
+        |> List.ofArray
+        |> Seq.iter t9.Insert
+        |> ignore
 
-Console.WriteLine(t9.Find(""))
+        let words =
+            [
+                "me"
+                "s"
+                "services"
+                "some"
+                "these"
+                "click"
+                "its"
+                "like"
+                "service"
+            ]
+            |> List.map calculateWordCode
+            |> List.map t9.Find
+            |> List.map (fun node -> node.Data.Head)
+
+        Console.WriteLine words
+    with
+    | error -> Console.WriteLine error
+} |> Async.Start
