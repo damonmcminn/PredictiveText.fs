@@ -6,22 +6,18 @@ namespace PredictiveText.Ui
 open PredictiveText.Core
 open Fable.Core
 
-type Model(t9: Trie.T9) =
+type Model() =
     let mutable code = ""
+    let t9 = Trie.T9()
 
-    member this.GetState =
-        (t9.Find code).Data
+    member this.Populate (words: List<string>) = words |> Seq.iter t9.Insert
+    member this.GetState = t9.Find(code).Data
+    member this.AddCode newCode = code <- code + newCode
+    member this.RemoveCode = code <- code.[0..(code.Length - 2)]
 
-    member this.AddCode newCode  =
-        code <- code + newCode
-
-    member this.RemoveCode =
-        code <- code.[0..(code.Length - 2)]
-
-
-type View(t9: Trie.T9) =
+type View(model: Model) =
     let doc = Fable.Import.Browser.document
-    let model = Model(t9)
+    let model = model
     let wordListContainer = doc.getElementById "words"
 
     let updateUI state =
@@ -61,7 +57,7 @@ type View(t9: Trie.T9) =
         |> Seq.iter (keypad.appendChild >> ignore)
         keypad
 
-    member this.InitializeView () =
+    member this.Init () =
         doc.getElementById "keypad" |> (fun el -> (el.appendChild(createKeypad))) |> ignore
         doc.getElementById "backspace" |> (fun el ->
             el.addEventListener_click (fun _ -> handleBackspace(); null))
