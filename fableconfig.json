@@ -1,7 +1,7 @@
 {
   "module": "commonjs",
   "sourceMaps": true,
-  "projFile": "./src/t9.fsx",
+  "projFile": "src/Main.fsx",
   "outDir": "temp",
   "scripts": {
     "prebuild": "npm install",

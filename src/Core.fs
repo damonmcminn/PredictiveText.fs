@@ -1,14 +1,7 @@
-#r "../node_modules/fable-core/Fable.Core.dll"
-#load "../node_modules/fable-import-fetch/Fable.Import.Fetch.fs"
-#load "../node_modules/fable-import-fetch/Fable.Helpers.Fetch.fs"
+namespace PredictiveText.Core
 
 open System
 open System.Collections
-
-open Fable.Core
-open Fable
-open Fable.Import.Fetch
-open Fable.Helpers.Fetch
 
 module Util =
     // map a List of single alphanum character strings to a list (letter, keycode) pairs
@@ -16,7 +9,7 @@ module Util =
         List.map (fun letter -> (letter, (index + 2).ToString())) xs
 
     // build map of keypad codes
-    let private keypadCodes =
+    let private keypadCodesMap =
         let populateMap (map : Map<string, string>) (letter, index) = map.Add(letter, index)
         [
             ["a"; "b"; "c"]
@@ -40,7 +33,7 @@ module Util =
 
     let calculateWordCode (word : string) =
         word.ToLower()
-        |> String.collect (fun c -> keypadCodes.Item(c.ToString()))
+        |> String.collect (fun c -> keypadCodesMap.Item(c.ToString()))
 
 module Trie =
     type Node(value : string, parent : Node option) =
@@ -124,49 +117,3 @@ module Trie =
         member this.Delete word =
             let node = Util.calculateWordCode word |> this.Find
             delete word node
-
-async {
-    let t9 = Trie.T9()
-
-    try
-        // download list of 20,000 most common English words and insert into t9
-        let! fetched = fetchAsync("https://raw.githubusercontent.com/first20hours/google-10000-english/master/20k.txt", [])
-        let! txt = fetched.text() |> Async.AwaitPromise
-
-        txt.Split '\n'
-        |> List.ofArray
-        |> Seq.iter t9.Insert
-        |> ignore
-
-        // just for japes: calculate word codes from list of words, find in t9 and print list to console
-        let words =
-            [
-                "me"
-                "s"
-                "services"
-                "some"
-                "these"
-                "click"
-                "its"
-                "like"
-                "service"
-            ]
-            |> List.map (Util.calculateWordCode >> t9.Find >> (fun node -> node.Data.Head))
-
-        Console.WriteLine words
-    with
-    | error -> Console.WriteLine error
-} |> Async.Start
-
-// Import.Node.require.Invoke("core-js") |> ignore
-
-// let d = Import.Browser.document
-
-// let createKey num =
-//     let div = d.createElement "div"
-//     div.innerText <- num.ToString()
-//     div
-
-// let keypad = d.getElementById "keypad"
-
-// [2..9] |> List.map createKey |> Seq.iter (fun div -> keypad.appendChild(div) |> ignore)
