@@ -1,5 +1,5 @@
 #r "../node_modules/fable-core/Fable.Core.dll"
-#load "Core.fs"
+#load "Core.fsx"
 
 namespace PredictiveText.Ui
 
@@ -57,7 +57,7 @@ type View(model: Model) =
         |> Seq.iter (keypad.appendChild >> ignore)
         keypad
 
-    member this.Init () =
+    member this.Init =
         doc.getElementById "keypad" |> (fun el -> (el.appendChild(createKeypad))) |> ignore
         doc.getElementById "backspace" |> (fun el ->
             el.addEventListener_click (fun _ -> handleBackspace(); null))

@@ -23,7 +23,8 @@ async {
         // populate Model
         txt.Split '\n' |> List.ofArray |> model.Populate |> ignore
 
-        view.Init |> ignore
+        // initialize View
+        view.Init
     with
     | error -> Console.WriteLine error
 } |> Async.Start

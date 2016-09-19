@@ -3,7 +3,7 @@ var webpack = require("webpack");
 
 var cfg = {
   devtool: "source-map",
-  entry: "./temp/t9.js",
+  entry: "./temp/Main.js",
   output: {
     path: path.join(__dirname, "public"),
     filename: "bundle.js"
