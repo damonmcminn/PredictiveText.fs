@@ -1,5 +1,5 @@
 {
-  "name": "hello-world-fs",
+  "name": "PredictiveText.fs",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,13 +10,13 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "fable-compiler": "^0.6.5",
-    "source-map-loader": "^0.1.5",
-    "webpack": "^1.13.2"
+    "source-map-loader": "0.1.5",
+    "webpack": "1.13.3"
   },
   "dependencies": {
-    "core-js": "^2.4.1",
-    "fable-core": "^0.6.3",
-    "fable-import-fetch": "^0.2.3"
+    "core-js": "2.4.1",
+    "fable-compiler": "0.6.15",
+    "fable-core": "0.6.10",
+    "fable-import-fetch": "0.2.4"
   }
 }
