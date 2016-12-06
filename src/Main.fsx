@@ -27,4 +27,4 @@ async {
         view.Init
     with
     | error -> Console.WriteLine error
-} |> Async.Start
+} |> Async.StartImmediate
