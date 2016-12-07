@@ -1,0 +1,7 @@
+{
+    "version": "0.1.0",
+    "command": "fable",
+    "isShellCommand": true,
+    "args": [ ],
+    "showOutput": "always"
+}
