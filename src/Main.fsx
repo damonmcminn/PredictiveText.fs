@@ -1,30 +1,40 @@
 #r "../node_modules/fable-core/Fable.Core.dll"
-#load "../node_modules/fable-import-fetch/Fable.Import.Fetch.fs"
-#load "../node_modules/fable-import-fetch/Fable.Helpers.Fetch.fs"
+#r "../node_modules/fable-powerpack/Fable.PowerPack.dll"
 #load "Ui.fsx"
 
-open System
 open Fable.Core
-open Fable.Import.Fetch
-open Fable.Helpers.Fetch
+open Fable.PowerPack
 open PredictiveText.Ui
 
 Fable.Import.Node.require.Invoke("core-js") |> ignore
 
 async {
-    try
-        let model = Model()
-        let view = View(model)
-        
-        // download list of 20,000 most common English words and insert into t9
-        let! fetched = fetchAsync("https://raw.githubusercontent.com/first20hours/google-10000-english/master/20k.txt", [])
-        let! txt = fetched.text() |> Async.AwaitPromise
+    let model = Model()
+    let view = View(model)
 
-        // populate Model
-        txt.Split '\n' |> List.ofArray |> model.Populate |> ignore
+    // download list of 20,000 most common English words and insert into t9
+    let wordList = "https://raw.githubusercontent.com/first20hours/google-10000-english/master/20k.txt"
 
-        // initialize View
-        view.Init
-    with
-    | error -> Console.WriteLine error
+    let! words =
+        promise {
+            let! res = Fetch.tryFetch wordList []
+
+            let! text =
+                match res with
+                | Result.Error err -> promise { return "" }
+                | Result.Ok response -> response.text()
+
+            return text
+        }
+        |> Async.AwaitPromise
+
+    // populate Model
+    words.Split '\n'
+    |> List.ofArray
+    |> model.Populate
+    |> ignore
+
+    // initialize View
+    view.Init
+
 } |> Async.StartImmediate
